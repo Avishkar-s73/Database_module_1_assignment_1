@@ -31,21 +31,60 @@
 // Purpose:
 // Help teachers retrieve and analyze student performance efficiently.
 
-
-const express = require('express');
-const { resolve } = require('path');
+const express = require("express");
+const { resolve } = require("path");
+const fs = require("fs");
+const path = require("path");
+const bodyParser = require("body-parser");
 
 const app = express();
 const port = 3010;
 
-app.use(express.static('static'));
+app.use(bodyParser.json());
 
-app.get('/', (req, res) => {
-  res.sendFile(resolve(__dirname, 'pages/index.html'));
+const dataFilePath = path.resolve(__dirname, "data.json");
+let students = [];
+
+fs.readFile(dataFilePath, "utf-8", (err, data) => {
+  if (err) {
+    console.log("Error reading data.json: ", err);
+  } else {
+    try {
+      students = JSON.parse(data);
+    } catch (parseErr) {
+      console.log("Error parsing data.json: ", parseErr);
+    }
+  }
+});
+
+app.post("/students/above-threshold", (req, res) => {
+  const { threshold } = req.body;
+  if (typeof threshold !== "number" || threshold < 0) {
+    return res.status(400).json({
+      error: "Invalid threshold value. Please provide a positive number.",
+    });
+  }
+
+  const filteredStudents = students.filter(
+    (student) => student.total > threshold
+  );
+
+  const response = {
+    count: filteredStudents.length,
+    students: filteredStudents.map((student) => ({
+      name: student.name,
+      total: student.total,
+    })),
+  };
+  res.json(response);
+});
+
+app.use(express.static("static"));
+
+app.get("/", (req, res) => {
+  res.sendFile(resolve(__dirname, "pages/index.html"));
 });
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });
-
-

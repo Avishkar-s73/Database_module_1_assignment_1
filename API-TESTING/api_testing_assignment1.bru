@@ -1,0 +1,17 @@
+meta {
+  name: api_testing_assignment1
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:3010/students/above-threshold
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "threshold":400
+  }
+}
